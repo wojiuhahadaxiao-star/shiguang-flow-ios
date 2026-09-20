@@ -33,11 +33,11 @@ jobs:
           cd output
           /usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' Payload/ShiguangFlow.app/Info.plist
           /usr/libexec/PlistBuddy -c 'Print CFBundleVersion' Payload/ShiguangFlow.app/Info.plist
-          zip -qry ShiguangFlow-1.0.0-build${{ github.run_number }}-unsigned.ipa Payload
+          zip -qry ShiguangFlow-1.1.0-build${{ github.run_number }}-unsigned.ipa Payload
           shasum -a 256 *.ipa > SHA256.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: ShiguangFlow-1.0.0-build${{ github.run_number }}-unsigned
+          name: ShiguangFlow-1.1.0-build${{ github.run_number }}-unsigned
           path: |
             output/*.ipa
             output/SHA256.txt
