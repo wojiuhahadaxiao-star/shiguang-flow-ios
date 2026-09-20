@@ -1,0 +1,45 @@
+name: Build Shiguang Flow
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Toolchain
+        run: xcodebuild -version && swift --version
+      - name: Test date paging and undo model
+        run: swift test
+      - name: Build iPhone simulator
+        run: >-
+          xcodebuild -project ShiguangFlow.xcodeproj -scheme ShiguangFlow
+          -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator'
+          -derivedDataPath build/simulator CODE_SIGNING_ALLOWED=NO build
+      - name: Build unsigned iPhone app
+        run: >-
+          xcodebuild -project ShiguangFlow.xcodeproj -scheme ShiguangFlow
+          -configuration Release -sdk iphoneos -destination 'generic/platform=iOS'
+          -derivedDataPath build/device CODE_SIGNING_ALLOWED=NO
+          CURRENT_PROJECT_VERSION=${{ github.run_number }} build
+      - name: Package unsigned IPA for signing
+        run: |
+          mkdir -p output/Payload
+          cp -R build/device/Build/Products/Release-iphoneos/ShiguangFlow.app output/Payload/
+          cd output
+          /usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' Payload/ShiguangFlow.app/Info.plist
+          /usr/libexec/PlistBuddy -c 'Print CFBundleVersion' Payload/ShiguangFlow.app/Info.plist
+          zip -qry ShiguangFlow-1.0.0-build${{ github.run_number }}-unsigned.ipa Payload
+          shasum -a 256 *.ipa > SHA256.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ShiguangFlow-1.0.0-build${{ github.run_number }}-unsigned
+          path: |
+            output/*.ipa
+            output/SHA256.txt
+          if-no-files-found: error
+          retention-days: 14
