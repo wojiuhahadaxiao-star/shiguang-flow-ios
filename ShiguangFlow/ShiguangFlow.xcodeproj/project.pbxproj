@@ -1,0 +1,40 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {};
+	objectVersion = 56;
+	objects = {
+		AEB140747DB9C71E27FF2C93 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ShiguangFlow/AppDelegate.swift"; sourceTree = "<group>"; };
+		816F3D46DB6D833BDA002CC0 = { isa = PBXBuildFile; fileRef = AEB140747DB9C71E27FF2C93; };
+		144F0A6FB9131EABB925E118 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ShiguangFlow/BasketViewController.swift"; sourceTree = "<group>"; };
+		13A30F1CC264A4BFFDEED1E6 = { isa = PBXBuildFile; fileRef = 144F0A6FB9131EABB925E118; };
+		EC7D1C923E3068FBB703CADD = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ShiguangFlow/CoverFlowLayout.swift"; sourceTree = "<group>"; };
+		D54E46ECDB3D7EDB9924C50E = { isa = PBXBuildFile; fileRef = EC7D1C923E3068FBB703CADD; };
+		D8403F9D5312DC182CBE6703 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ShiguangFlow/FlowViewController.swift"; sourceTree = "<group>"; };
+		084AAFDF85289A1EEC649CD6 = { isa = PBXBuildFile; fileRef = D8403F9D5312DC182CBE6703; };
+		0D4842D8FBF9AECF41A469BA = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ShiguangFlow/PhotoStore.swift"; sourceTree = "<group>"; };
+		5A229F25174FEA68F43CB5DD = { isa = PBXBuildFile; fileRef = 0D4842D8FBF9AECF41A469BA; };
+		3841A76BEE4603D4AE0C5897 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ShiguangFlow/PhotoViewer.swift"; sourceTree = "<group>"; };
+		A7AFBF552FCB12E42D3AB507 = { isa = PBXBuildFile; fileRef = 3841A76BEE4603D4AE0C5897; };
+		8DE9954FEF9E76E5F066D5F0 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/FlowCore/FlowSession.swift"; sourceTree = "<group>"; };
+		B4BBA666D989810F06084275 = { isa = PBXBuildFile; fileRef = 8DE9954FEF9E76E5F066D5F0; };
+		3685E330EC5277A9DD5661C6 = { isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = ShiguangFlow/Assets.xcassets; sourceTree = "<group>"; };
+		716E9590E60B3AFA6E62BF18 = { isa = PBXBuildFile; fileRef = 3685E330EC5277A9DD5661C6; };
+		59BD0A3FF43B32849B319E64 = { isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = ShiguangFlow/Info.plist; sourceTree = "<group>"; };
+		38A007151ABE87CC01A5B6E9 = { isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ShiguangFlow.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		FBDC4F23F93125BBEEAE800C = { isa = PBXGroup; children = (38A007151ABE87CC01A5B6E9,); name = Products; sourceTree = "<group>"; };
+		B28B7AF69320201D1CF206EB = { isa = PBXGroup; children = (AEB140747DB9C71E27FF2C93,144F0A6FB9131EABB925E118,EC7D1C923E3068FBB703CADD,D8403F9D5312DC182CBE6703,0D4842D8FBF9AECF41A469BA,3841A76BEE4603D4AE0C5897,8DE9954FEF9E76E5F066D5F0,3685E330EC5277A9DD5661C6,59BD0A3FF43B32849B319E64,FBDC4F23F93125BBEEAE800C,); sourceTree = "<group>"; };
+		BCE16DD0260827ECF338C787 = { isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (816F3D46DB6D833BDA002CC0,13A30F1CC264A4BFFDEED1E6,D54E46ECDB3D7EDB9924C50E,084AAFDF85289A1EEC649CD6,5A229F25174FEA68F43CB5DD,A7AFBF552FCB12E42D3AB507,B4BBA666D989810F06084275,); runOnlyForDeploymentPostprocessing = 0; };
+		0189424A5A60FED329FA868E = { isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (716E9590E60B3AFA6E62BF18,); runOnlyForDeploymentPostprocessing = 0; };
+		7561BFB015D8F536760CB671 = { isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		89E1FD6268CC0F221A2BE178 = { isa = XCBuildConfiguration; buildSettings = { CLANG_ENABLE_MODULES = "YES"; CLANG_ENABLE_OBJC_ARC = "YES"; IPHONEOS_DEPLOYMENT_TARGET = "16.0"; SDKROOT = "iphoneos"; SWIFT_VERSION = "5.0"; SWIFT_STRICT_CONCURRENCY = "minimal"; SWIFT_OPTIMIZATION_LEVEL = "-Onone"; DEBUG_INFORMATION_FORMAT = "dwarf"; SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG"; }; name = Debug; };
+		E6DE6C99132752C914FEF632 = { isa = XCBuildConfiguration; buildSettings = { CLANG_ENABLE_MODULES = "YES"; CLANG_ENABLE_OBJC_ARC = "YES"; IPHONEOS_DEPLOYMENT_TARGET = "16.0"; SDKROOT = "iphoneos"; SWIFT_VERSION = "5.0"; SWIFT_STRICT_CONCURRENCY = "minimal"; SWIFT_OPTIMIZATION_LEVEL = "-O"; DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym"; }; name = Release; };
+		862894B703A6DEDF96A9DD6C = { isa = XCConfigurationList; buildConfigurations = (89E1FD6268CC0F221A2BE178,E6DE6C99132752C914FEF632,); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		7082CC0B6FC1282FCEABD07A = { isa = XCBuildConfiguration; buildSettings = { PRODUCT_NAME = "$(TARGET_NAME)"; PRODUCT_BUNDLE_IDENTIFIER = "com.yang.shiguangflow.standalone"; INFOPLIST_FILE = "ShiguangFlow/Info.plist"; GENERATE_INFOPLIST_FILE = "NO"; CURRENT_PROJECT_VERSION = "1"; MARKETING_VERSION = "1.1.0"; TARGETED_DEVICE_FAMILY = "1"; SUPPORTED_PLATFORMS = "iphoneos iphonesimulator"; CODE_SIGN_STYLE = "Automatic"; ASSETCATALOG_COMPILER_APPICON_NAME = "AppIcon"; LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks"; SWIFT_EMIT_LOC_STRINGS = "YES"; ENABLE_USER_SCRIPT_SANDBOXING = "YES"; }; name = Debug; };
+		639A7CA24D39909E713B47F7 = { isa = XCBuildConfiguration; buildSettings = { PRODUCT_NAME = "$(TARGET_NAME)"; PRODUCT_BUNDLE_IDENTIFIER = "com.yang.shiguangflow.standalone"; INFOPLIST_FILE = "ShiguangFlow/Info.plist"; GENERATE_INFOPLIST_FILE = "NO"; CURRENT_PROJECT_VERSION = "1"; MARKETING_VERSION = "1.1.0"; TARGETED_DEVICE_FAMILY = "1"; SUPPORTED_PLATFORMS = "iphoneos iphonesimulator"; CODE_SIGN_STYLE = "Automatic"; ASSETCATALOG_COMPILER_APPICON_NAME = "AppIcon"; LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks"; SWIFT_EMIT_LOC_STRINGS = "YES"; ENABLE_USER_SCRIPT_SANDBOXING = "YES"; }; name = Release; };
+		C57128001CE614BF8549D6BB = { isa = XCConfigurationList; buildConfigurations = (7082CC0B6FC1282FCEABD07A,639A7CA24D39909E713B47F7,); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		0E8A3AD980EC179856012B7E = { isa = PBXNativeTarget; buildConfigurationList = C57128001CE614BF8549D6BB; buildPhases = (BCE16DD0260827ECF338C787,7561BFB015D8F536760CB671,0189424A5A60FED329FA868E,); buildRules = (); dependencies = (); name = ShiguangFlow; productName = ShiguangFlow; productReference = 38A007151ABE87CC01A5B6E9; productType = "com.apple.product-type.application"; };
+		98F54143AB4E86B28C3AFEE0 = { isa = PBXProject; attributes = { BuildIndependentTargetsInParallel = YES; LastUpgradeCheck = 1600; }; buildConfigurationList = 862894B703A6DEDF96A9DD6C; compatibilityVersion = "Xcode 14.0"; developmentRegion = "zh-Hans"; hasScannedForEncodings = 0; knownRegions = ("zh-Hans",en,Base,); mainGroup = B28B7AF69320201D1CF206EB; productRefGroup = FBDC4F23F93125BBEEAE800C; projectDirPath = ""; projectRoot = ""; targets = (0E8A3AD980EC179856012B7E,); };
+	};
+	rootObject = 98F54143AB4E86B28C3AFEE0;
+}
