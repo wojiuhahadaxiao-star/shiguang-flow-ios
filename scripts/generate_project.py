@@ -35,7 +35,7 @@ for level in ['project','target']:
         } if level=='project' else {
             'PRODUCT_NAME':'$(TARGET_NAME)', 'PRODUCT_BUNDLE_IDENTIFIER':'com.yang.shiguangflow.standalone',
             'INFOPLIST_FILE':'ShiguangFlow/Info.plist', 'GENERATE_INFOPLIST_FILE':'NO',
-            'CURRENT_PROJECT_VERSION':'1', 'MARKETING_VERSION':'1.0.0',
+            'CURRENT_PROJECT_VERSION':'1', 'MARKETING_VERSION':'1.1.0',
             'TARGETED_DEVICE_FAMILY':'1', 'SUPPORTED_PLATFORMS':'iphoneos iphonesimulator',
             'CODE_SIGN_STYLE':'Automatic', 'ASSETCATALOG_COMPILER_APPICON_NAME':'AppIcon',
             'LD_RUNPATH_SEARCH_PATHS':'$(inherited) @executable_path/Frameworks',

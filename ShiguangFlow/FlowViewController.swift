@@ -1,6 +1,7 @@
 import UIKit
 import Photos
 import PhotosUI
+
 final class FlowViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate, UIGestureRecognizerDelegate {
     private let store = PhotoStore()
     private let session = FlowSession(pending: UserDefaults.standard.stringArray(forKey: "flow.pending.v1") ?? [])
@@ -10,6 +11,8 @@ final class FlowViewController: UIViewController, UICollectionViewDataSource, UI
     private let settingsButton = UIButton(type: .system)
     private let undoButton = UIButton(type: .system)
     private let trashButton = UIButton(type: .system)
+    private let trashGraphic = TrashCountView()
+    private var edgeReady = false
     private let countLabel = UILabel()
     private let hintLabel = UILabel()
     private let edgeLabel = UILabel()
@@ -45,7 +48,16 @@ final class FlowViewController: UIViewController, UICollectionViewDataSource, UI
         }
         configureButton(settingsButton, symbol: "gearshape", title: "设置", action: #selector(settings))
         configureButton(undoButton, symbol: "arrow.uturn.backward", title: "撤回", action: #selector(undo))
-        configureButton(trashButton, symbol: "trash", title: "待删除", action: #selector(basket))
+        trashButton.addTarget(self, action: #selector(basket), for: .touchUpInside)
+        trashGraphic.isUserInteractionEnabled = false
+        trashGraphic.translatesAutoresizingMaskIntoConstraints = false
+        trashButton.addSubview(trashGraphic)
+        NSLayoutConstraint.activate([
+            trashGraphic.centerXAnchor.constraint(equalTo: trashButton.centerXAnchor),
+            trashGraphic.centerYAnchor.constraint(equalTo: trashButton.centerYAnchor),
+            trashGraphic.widthAnchor.constraint(equalToConstant: 48),
+            trashGraphic.heightAnchor.constraint(equalToConstant: 52)
+        ])
         dateButton.contentHorizontalAlignment = .leading; dateButton.tintColor = .flowBlue
         dateButton.addTarget(self, action: #selector(toggleDate), for: .touchUpInside)
         permissionButton.setTitle("允许访问照片", for: .normal); permissionButton.titleLabel?.font = .systemFont(ofSize: 17, weight: .semibold)
@@ -64,7 +76,7 @@ final class FlowViewController: UIViewController, UICollectionViewDataSource, UI
             countLabel.centerXAnchor.constraint(equalTo: safe.centerXAnchor), countLabel.bottomAnchor.constraint(equalTo: hintLabel.topAnchor, constant: -12),
             hintLabel.centerXAnchor.constraint(equalTo: safe.centerXAnchor), hintLabel.bottomAnchor.constraint(equalTo: undoButton.topAnchor, constant: -20),
             undoButton.leadingAnchor.constraint(equalTo: safe.leadingAnchor, constant: 24), undoButton.bottomAnchor.constraint(equalTo: safe.bottomAnchor, constant: -16), undoButton.widthAnchor.constraint(equalToConstant: 60), undoButton.heightAnchor.constraint(equalToConstant: 56),
-            trashButton.trailingAnchor.constraint(equalTo: safe.trailingAnchor, constant: -24), trashButton.bottomAnchor.constraint(equalTo: undoButton.bottomAnchor), trashButton.widthAnchor.constraint(equalToConstant: 92), trashButton.heightAnchor.constraint(equalToConstant: 56),
+            trashButton.trailingAnchor.constraint(equalTo: safe.trailingAnchor, constant: -24), trashButton.bottomAnchor.constraint(equalTo: undoButton.bottomAnchor), trashButton.widthAnchor.constraint(equalToConstant: 60), trashButton.heightAnchor.constraint(equalToConstant: 56),
             edgeLabel.centerXAnchor.constraint(equalTo: safe.centerXAnchor), edgeLabel.topAnchor.constraint(equalTo: dateButton.bottomAnchor, constant: 8),
             emptyLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor), emptyLabel.centerYAnchor.constraint(equalTo: collection.centerYAnchor, constant: -30), emptyLabel.leadingAnchor.constraint(equalTo: safe.leadingAnchor, constant: 28), emptyLabel.trailingAnchor.constraint(equalTo: safe.trailingAnchor, constant: -28),
             permissionButton.centerXAnchor.constraint(equalTo: safe.centerXAnchor), permissionButton.topAnchor.constraint(equalTo: emptyLabel.bottomAnchor, constant: 16), permissionButton.heightAnchor.constraint(equalToConstant: 48),
@@ -135,11 +147,11 @@ final class FlowViewController: UIViewController, UICollectionViewDataSource, UI
         dateButton.configuration = config
         let inDay: Bool = { if case .day = session.mode { return true }; return false }()
         dateButton.isEnabled = !isBusy && (date != nil || inDay)
-        countLabel.text = ids.isEmpty ? "0 / 0" : "\(index + 1) / \(ids.count)" + (inDay ? "  ·  第 \(session.page + 1) 组" : "")
-        hintLabel.text = inDay ? "上滑待删除 · 双击放大 · 拉过边界换组" : "上滑待删除 · 双击放大"
+        countLabel.text = ids.isEmpty ? "0 / 0" : "\(index + 1) / \(ids.count)" + "  ·  第 \(session.groupNumber) 组"
+        hintLabel.text = "上滑待删除 · 双击放大 · 拉过边界换组"
         undoButton.isEnabled = session.canUndo && !isBusy
         trashButton.isEnabled = !session.pending.isEmpty && !isBusy
-        var trash = trashButton.configuration; trash?.title = session.pending.isEmpty ? nil : "\(session.pending.count)"; trash?.imagePadding = 6; trashButton.configuration = trash
+        trashGraphic.count = session.pending.count
         trashButton.accessibilityLabel = "待删除 \(session.pending.count) 张"
         settingsButton.isEnabled = !isBusy
         emptyLabel.isHidden = !ids.isEmpty || loading
@@ -201,10 +213,16 @@ final class FlowViewController: UIViewController, UICollectionViewDataSource, UI
         let overscroll = scrollView.contentOffset.x < 0 ? -scrollView.contentOffset.x : scrollView.contentOffset.x - maxX
         if overscroll > 12 {
             let canPage = scrollView.contentOffset.x < 0 ? session.hasPrevious : session.hasNext
-            edgeLabel.text = canPage ? (overscroll >= 64 ? "松手切换一组" : "继续拉动切换一组") : "已到边界"
+            let directionName = scrollView.contentOffset.x < 0 ? "上一组" : "下一组"
+            let ready = canPage && overscroll >= 64
+            if ready && !edgeReady { haptic() }
+            edgeReady = ready
+            edgeLabel.text = canPage ? (ready ? "松手，切换\(directionName)" : "继续拉出\(directionName)") : "已到边界"
+            edgeLabel.transform = CGAffineTransform(scaleX: ready ? 1.06 : 1, y: ready ? 1.06 : 1)
             edgeLabel.alpha = min(1, overscroll / 64)
-        } else { edgeLabel.alpha = 0 }
+        } else { edgeLabel.alpha = 0; edgeReady = false; edgeLabel.transform = .identity }
     }
+    func scrollViewWillBeginDragging(_ scrollView: UIScrollView) { pagingDirection = 0; edgeReady = false }
     func scrollViewWillEndDragging(_ scrollView: UIScrollView, withVelocity velocity: CGPoint, targetContentOffset: UnsafeMutablePointer<CGPoint>) {
         let maxX = CGFloat(max(0, ids.count - 1)) * flow.pitch
         if scrollView.contentOffset.x < -64 && session.hasPrevious { pagingDirection = -1 }
@@ -220,7 +238,7 @@ final class FlowViewController: UIViewController, UICollectionViewDataSource, UI
     private func settled() { preheat(); if deferredRefresh && !isBusy { deferredRefresh = false; refresh() } }
     private func changePage(_ direction: Int) {
         guard !isBusy, session.movePage(direction) else { return }
-        isBusy = true; collection.isScrollEnabled = false; haptic(); edgeLabel.alpha = 0; updateChrome()
+        isBusy = true; collection.isScrollEnabled = false; haptic(); edgeLabel.alpha = 0; edgeReady = false; updateChrome()
         UIView.animate(withDuration: 0.13, animations: {
             self.collection.transform = CGAffineTransform(translationX: CGFloat(-direction) * 44, y: 0); self.collection.alpha = 0
         }) { _ in
@@ -316,7 +334,7 @@ final class FlowViewController: UIViewController, UICollectionViewDataSource, UI
     @objc private func settings() {
         guard !isBusy else { return }
         let buildNumber = (Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String) ?? "1"
-        let sheet = UIAlertController(title: "拾光 Flow", message: "独立新版 · v1.0.0 (\(buildNumber))", preferredStyle: .actionSheet)
+        let sheet = UIAlertController(title: "拾光 Flow", message: "独立新版 · v1.1.0 (\(buildNumber))", preferredStyle: .actionSheet)
         sheet.addAction(UIAlertAction(title: "随机换一组", style: .default) { _ in self.session.newRandomBatch(); self.render() })
         if store.authorization == .notDetermined { sheet.addAction(UIAlertAction(title: "允许访问照片", style: .default) { _ in self.store.authorize { self.refresh() } }) }
         if store.authorization == .limited { sheet.addAction(UIAlertAction(title: "管理可访问的照片", style: .default) { _ in PHPhotoLibrary.shared().presentLimitedLibraryPicker(from: self) }) }
@@ -324,7 +342,7 @@ final class FlowViewController: UIViewController, UICollectionViewDataSource, UI
         let enabled = UserDefaults.standard.object(forKey: "flow.haptics") as? Bool != false
         sheet.addAction(UIAlertAction(title: enabled ? "关闭触感反馈" : "开启触感反馈", style: .default) { _ in UserDefaults.standard.set(!enabled, forKey: "flow.haptics") })
         sheet.addAction(UIAlertAction(title: "操作说明", style: .default) { _ in
-            self.message("操作说明", "左右滑动浏览；上滑放入待删除；双击或双指展开进入大图。\n\n大图支持双指缩放，捏回适屏后下滑返回。\n\n点击日期切换随机 / 当日，当日拉过边界切换 25 张一组。\n\n左下角撤回，右下角回看待删。实删需两次确认及系统授权。Live Photo 当前显示静态照片。")
+            self.message("操作说明", "左右滑动浏览；上滑放入待删除；双击或双指展开进入大图。\n\n大图支持双指缩放，捏回适屏后下滑返回。\n\n点击日期切换随机 / 当日。两种模式都可在最右端继续左拉换下一组，在最左端继续右拉回上一组，每组最多 25 张。\n\n左下角撤回，右下角回看待删。实删需两次确认及系统授权。Live Photo 当前显示静态照片。")
         })
         sheet.addAction(UIAlertAction(title: "取消", style: .cancel) { _ in self.settled() })
         sheet.popoverPresentationController?.sourceView = settingsButton; sheet.popoverPresentationController?.sourceRect = settingsButton.bounds

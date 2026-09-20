@@ -23,9 +23,15 @@ for path in (ROOT/'ShiguangFlow/Assets.xcassets').rglob('Contents.json'):
     for image in data.get('images', []):
         assert (path.parent/image['filename']).is_file()
 tests = (ROOT/'Tests/FlowCoreTests/FlowSessionTests.swift').read_text()
-assert len(re.findall(r'func test\w+\(', tests)) == 10
+assert len(re.findall(r'func test\w+\(', tests)) == 14
 workflow = (ROOT/'.github/workflows/build-ios.yml').read_text()
 for expected in ['swift test', 'CODE_SIGNING_ALLOWED=NO', 'actions/upload-artifact@v4', 'workflow_dispatch', 'github.run_number']:
     assert expected in workflow
-print('PASS: plist, source references, scheme, assets, 10 test declarations and build workflow presence')
+controller = (ROOT/'ShiguangFlow/FlowViewController.swift').read_text()
+viewer = (ROOT/'ShiguangFlow/PhotoViewer.swift').read_text()
+assert 'import PhotosUI' in controller
+assert controller.count('presentLimitedLibraryPicker(from: self)') == 2
+assert 'override func gestureRecognizerShouldBegin(' in viewer
+print('PASS: PhotosUI import and UIView override checks')
+print('PASS: plist, source references, scheme, assets, 14 test declarations and build workflow presence')
 print('NOT RUN: Swift type checking, XCTest execution, iOS builds, simulator or real-device interaction')

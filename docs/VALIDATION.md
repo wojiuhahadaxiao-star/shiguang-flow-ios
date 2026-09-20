@@ -1,3 +1,24 @@
+# 1.1.0 P2 更新检查
+
+新增随机分组历史、优先未浏览抽样；两种模式均通过同一边界检测与弹簧过渡换组。垃圾桶使用无内部竖线的轮廓绘制，内部数字直接取 `session.pending.count`，包含 0。
+
+新增 4 项测试：随机边界及原序回退、换组后撤回、单组边界及日期往返、待删计数增减。此前 10 项测试通过的证据来自用户上传的 P1 修复前 CI 日志；本次 14 项测试尚未在 Swift 环境执行。已完成语法解析与工程静态检查，尚无本次 Xcode 编译或实机动画验证结果。
+
+---
+
+# P1 编译修复记录（2026-09-20）
+
+用户提供的 `logs_96159752345.zip` 中，10 项 FlowCore XCTest 全部通过（0 failures）。随后模拟器编译失败：`FlowViewController.swift` 两处提示 `PHPhotoLibrary` 没有 `presentLimitedLibraryPicker`。
+
+本次修复：
+- 在 `FlowViewController.swift` 导入 `PhotosUI`，使有限相册选择器扩展接口可见。
+- 在 `PhotoViewer.swift` 的 `gestureRecognizerShouldBegin` 添加 `override`，与用户已做的修复一致。
+- 两处有限相册选择调用均保留。
+
+修复后完成源码静态检查；当前环境仍无 Xcode，尚无修复后的 iOS 编译成功或实机验证结果。下面保留初次交付时的历史检查记录，其中“未执行测试”已被上述用户 CI 结果更新。
+
+---
+
 # 本次检查记录
 
 交付版本：拾光 Flow 1.0.0，源码交付日：2026-09-20。

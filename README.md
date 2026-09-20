@@ -1,6 +1,10 @@
+> **1.1.0 P2 更新**：随机与当日模式均支持右端继续左拉进入下一组、左端继续右拉回上一组；阈值触感与弹簧过渡。垃圾桶内部显示待删数量，初始为 0，每标记一张加 1，撤回一张减 1。已有仓库请用本包的内容更新根目录，保留目录层级，包括 `.github`。
+
+> **编译修复 P1**：补齐 `FlowViewController.swift` 的 `import PhotosUI`，并保留 `PhotoViewer.swift` 的 `override` 修复。已有仓库只需替换 `ShiguangFlow/` 下这两个 Swift 文件即可；无需修改 Actions 或重建仓库。
+
 # 拾光 Flow · 全新独立 iOS 工程
 
-原生 UIKit / PhotoKit，iOS 16.0 及以上，iPhone 竖屏。版本 **1.0.0**。
+原生 UIKit / PhotoKit，iOS 16.0 及以上，iPhone 竖屏。版本 **1.1.0**。
 
 - 应用名：**拾光 Flow**
 - Bundle ID：**com.yang.shiguangflow.standalone**
@@ -8,7 +12,7 @@
 - 全新工程，不依赖、不替换旧 App 源码；安装时保持此独立 Bundle ID，即可与旧 App 共存。
 - 没有第三方运行时依赖，无需 CocoaPods、XcodeGen 或服务器。
 
-> 交付状态：完整源码工程，已做 Swift 语法解析和工程静态检查。当前生成环境没有 Xcode/iOS SDK，**尚未完成 Xcode 编译、自动测试执行或 iPhone 实机验证**。包内不含已签名 IPA。GitHub Actions 配置负责运行逻辑测试、编译并输出待签名 IPA；只有构建成功后才能取得该产物。
+> 交付状态：完整源码工程，已做 Swift 语法解析和工程静态检查。当前生成环境没有 Xcode/iOS SDK，**尚未完成修复后 Xcode 编译或 iPhone 实机验证；用户提供的 CI 日志已确认 10 项核心测试通过**。包内不含已签名 IPA。GitHub Actions 配置负责运行逻辑测试、编译并输出待签名 IPA；只有构建成功后才能取得该产物。
 
 ## 本版操作
 
@@ -23,12 +27,12 @@
 | 全屏双指展开 / 收拢 | 原生 UIScrollView 连续缩放与拖动，收拢至适屏大小 |
 | 全屏再次双击 | 以触点为中心放大 / 返回适屏 |
 | 全屏适屏时下滑 | 跟手拖动并淡出背景，照片动画回到原卡片位置；放大状态下先捏回适屏 |
-| 当天两端继续拉动 | 还有当天照片时，拉过阈值松手，弹簧动画切换前 / 后 25 张 |
+| 两种模式两端继续拉动 | 有前 / 后组时，拉过阈值松手，以弹簧动画切换，每组最多 25 张 |
 | 右下角垃圾桶 | 回看待删除；左滑某项撤回，也可全部撤回；删除需两次 App 确认及系统删除授权 |
 
 照片保持比例、不裁剪，以近似等面积排版并限制最大宽高。全屏“原图大小”按原比例适配屏幕理解，并非默认逐像素 1:1。放大清晰图按原比例请求，最长边最高 6000 像素，避免全尺寸超大照片带来过高内存占用。Live Photo 本版显示静态照片，视频不进入照片组。
 
-当天模式以设备当前日历 / 时区划分日期，按拍摄时间升序排列；相同时间用资源 ID 稳定排序。从随机照片进入时，直接定位它所在的 25 张组。随机组滑到底只弹性回弹，换组在设置中操作，避免打乱随机 / 当日切换后的浏览位置。
+当天模式以设备当前日历 / 时区划分日期，按拍摄时间升序排列；相同时间用资源 ID 稳定排序。从随机照片进入时，直接定位它所在的 25 张组。随机模式优先抽取尚未看过的照片；本轮看完后可重新抽取，但下一组不重复当前组。只有一组可浏览照片时，到边界只回弹。返回上一组时保留原组顺序；当日模式保持时间顺序，最后一组无下一组时只回弹。
 
 ## Windows + GitHub：建立新仓库并构建
 
@@ -52,7 +56,7 @@
 4. 仓库首页应直接看到 `ShiguangFlow.xcodeproj`、`ShiguangFlow`、`Sources`、`Tests`、`Package.swift` 和 `.github/workflows/build-ios.yml`，外面不要再套一层文件夹。
 5. 点击 **Actions → Build Shiguang Flow**。首次推送会触发。也可在该页面选择 **Run workflow → main → Run workflow**。如果提示启用 Actions，先按页面提示启用。
 6. 等所有步骤通过：逻辑测试 → 模拟器编译 → iPhone 编译 → 打包。失败时打开第一个红色步骤查看日志；失败不会生成可用 IPA。
-7. 成功后在该次运行底部 **Artifacts** 下载 `ShiguangFlow-1.0.0-buildN-unsigned`。解压后才得到 `.ipa`；不要误选 GitHub 的源码 ZIP。
+7. 成功后在该次运行底部 **Artifacts** 下载 `ShiguangFlow-1.1.0-buildN-unsigned`。解压后才得到 `.ipa`；不要误选 GitHub 的源码 ZIP。
 
 ### 也可用 GitHub Desktop
 
@@ -66,7 +70,7 @@ GitHub 生成的是 **unsigned IPA（未签名安装包）**，不能点击 IPA 
 - 保留本应用的独立标识 `com.yang.shiguangflow.standalone`，或使用新的唯一标识，例如 `com.你的名称.shiguangflow`；**不要改成旧 App 的 Bundle ID**。
 - 新图标和桌面名称是“拾光 Flow”。首次打开后点“允许访问照片”，选择允许全部或部分照片。有限访问可在设置中追加。
 - 签名有效期、设备信任与开发者模式按你所用 Apple 账号和签名工具的实际提示处理。
-- 在 App 右上角设置检查 `v1.0.0 (N)`。`N` 与 GitHub 的 buildN 一致；本地默认构建为 1。用这个号码核对是否安装了刚下载的版本。
+- 在 App 右上角设置检查 `v1.1.0 (N)`。`N` 与 GitHub 的 buildN 一致；本地默认构建为 1。用这个号码核对是否安装了刚下载的版本。
 - 已有 App 无需删除；两个 App 对同一个系统相册的实际删除操作会影响同一批照片。
 
 ## 有 Mac：Xcode 直接运行
@@ -87,7 +91,7 @@ xcodebuild -project ShiguangFlow.xcodeproj -scheme ShiguangFlow \
   CODE_SIGNING_ALLOWED=NO build
 ```
 
-`swift test` 运行 10 项核心测试，覆盖随机 / 当日定位、跨页不丢失、最后一页删除、跨模式撤回、重新启动恢复标记、权限变化、缺失日期、空相册等。没有声称这些测试已经在交付环境运行通过；上传后看 CI 结果。
+`swift test` 运行 14 项核心测试（P2 新增 4 项），覆盖随机 / 当日定位、跨页不丢失、最后一页删除、跨模式撤回、重新启动恢复标记、权限变化、缺失日期、空相册等。用户提供的 2026-09-20 GitHub Actions 日志已确认这 10 项核心测试全部通过（0 failures）；修复后的 iOS 编译仍需看新一次 CI 结果。
 
 - `Sources/FlowCore/FlowSession.swift`：不依赖 UIKit 的分页、模式、标记 / 撤回状态。
 - `ShiguangFlow/CoverFlowLayout.swift`：原生 UICollectionView 3D 排列、吸附、照片比例布局。

@@ -104,3 +104,31 @@ final class PhotoCell: UICollectionViewCell {
         contentView.transform = .identity; contentView.alpha = 1
     }
 }
+
+/// Outline-only trash can: the count replaces the three interior strokes.
+final class TrashCountView: UIView {
+    var count = 0 { didSet { if oldValue != count { setNeedsDisplay() } } }
+    override init(frame: CGRect) { super.init(frame: frame); isOpaque = false; backgroundColor = .clear; isAccessibilityElement = false }
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+    override func draw(_ rect: CGRect) {
+        UIColor.flowBlue.setStroke()
+        let outline = UIBezierPath(); outline.lineWidth = 2.2
+        outline.lineCapStyle = .round; outline.lineJoinStyle = .round
+        outline.move(to: CGPoint(x: 8, y: 14)); outline.addLine(to: CGPoint(x: 40, y: 14))
+        outline.move(to: CGPoint(x: 18, y: 13)); outline.addLine(to: CGPoint(x: 19, y: 7))
+        outline.addLine(to: CGPoint(x: 29, y: 7)); outline.addLine(to: CGPoint(x: 30, y: 13))
+        outline.move(to: CGPoint(x: 11, y: 18)); outline.addLine(to: CGPoint(x: 13, y: 43))
+        outline.addQuadCurve(to: CGPoint(x: 17, y: 47), controlPoint: CGPoint(x: 13, y: 47))
+        outline.addLine(to: CGPoint(x: 31, y: 47))
+        outline.addQuadCurve(to: CGPoint(x: 35, y: 43), controlPoint: CGPoint(x: 35, y: 47))
+        outline.addLine(to: CGPoint(x: 37, y: 18)); outline.stroke()
+        let text = String(count) as NSString
+        var fontSize: CGFloat = 17
+        var font = UIFont.monospacedDigitSystemFont(ofSize: fontSize, weight: .semibold)
+        while text.size(withAttributes: [.font: font]).width > 24 && fontSize > 5 {
+            fontSize -= 0.5; font = .monospacedDigitSystemFont(ofSize: fontSize, weight: .semibold)
+        }
+        let size = text.size(withAttributes: [.font: font])
+        text.draw(at: CGPoint(x: (bounds.width - size.width) / 2, y: 32 - size.height / 2), withAttributes: [.font: font, .foregroundColor: UIColor.flowBlue])
+    }
+}

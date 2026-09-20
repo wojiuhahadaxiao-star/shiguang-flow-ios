@@ -67,4 +67,35 @@ final class FlowSessionTests: XCTestCase {
         s.update([PhotoRecord(id: "before", date: start.addingTimeInterval(-1)), PhotoRecord(id: "inside", date: start), PhotoRecord(id: "after", date: start.addingTimeInterval(86400))])
         s.setRandomBatch(["inside"]); s.toggleMode(focused: "inside"); XCTAssertEqual(s.visibleIDs, ["inside"])
     }
+    func testRandomBoundaryLoadsUnseenBatchAndCanReturn() {
+        let s = make(); let first = s.visibleIDs
+        XCTAssertTrue(s.hasNext); XCTAssertFalse(s.hasPrevious)
+        XCTAssertTrue(s.movePage(1)); let second = s.visibleIDs
+        XCTAssertEqual(second.count, 25); XCTAssertTrue(Set(first).isDisjoint(with: second))
+        XCTAssertEqual(s.groupNumber, 2)
+        XCTAssertTrue(s.movePage(-1)); XCTAssertEqual(s.visibleIDs, first)
+        XCTAssertTrue(s.movePage(1)); XCTAssertEqual(s.visibleIDs, second)
+    }
+    func testRandomPagingSkipsPendingAndUndoRestoresBatch() {
+        let s = make(); let first = s.visibleIDs
+        s.stage("p27"); XCTAssertEqual(s.pending.count, 1)
+        XCTAssertTrue(s.movePage(1)); XCTAssertFalse(s.visibleIDs.contains("p27"))
+        XCTAssertEqual(s.undo(), "p27"); XCTAssertEqual(s.visibleIDs, first)
+        XCTAssertEqual(s.groupNumber, 1); XCTAssertEqual(s.pending.count, 0)
+    }
+    func testSingleRandomBatchHasNoNextAndDayRoundTripKeepsGroup() {
+        let one = FlowSession(calendar: calendar); one.update(records(10))
+        XCTAssertFalse(one.hasNext); XCTAssertFalse(one.movePage(1))
+        let s = make(); XCTAssertTrue(s.movePage(1))
+        let batch = s.visibleIDs; let id = batch[0]
+        s.toggleMode(focused: id); s.toggleMode(focused: id)
+        XCTAssertEqual(s.visibleIDs, batch); XCTAssertEqual(s.groupNumber, 2)
+    }
+    func testPendingCountChangesByOneAndRestoreAllShowsZero() {
+        let s = make(); XCTAssertEqual(s.pending.count, 0)
+        s.stage("p27"); XCTAssertEqual(s.pending.count, 1)
+        s.stage("p3"); XCTAssertEqual(s.pending.count, 2)
+        s.undo(); XCTAssertEqual(s.pending.count, 1)
+        s.restoreAll(); XCTAssertEqual(s.pending.count, 0)
+    }
 }
