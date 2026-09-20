@@ -79,7 +79,7 @@ final class PhotoViewer: UIView, UIScrollViewDelegate, UIGestureRecognizerDelega
         let size = CGSize(width: scroll.bounds.width / scale, height: scroll.bounds.height / scale)
         scroll.zoom(to: CGRect(x: point.x - size.width / 2, y: point.y - size.height / 2, width: size.width, height: size.height), animated: true)
     }
-    func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+    override func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
         guard gestureRecognizer === dismissPan else { return true }
         let velocity = dismissPan.velocity(in: self)
         return scroll.zoomScale <= 1.01 && velocity.y > 0 && abs(velocity.y) > abs(velocity.x) * 1.2 && !isDismissing
