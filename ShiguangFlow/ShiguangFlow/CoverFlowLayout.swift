@@ -53,6 +53,7 @@ final class CoverFlowLayout: UICollectionViewLayout {
 
 final class PhotoCell: UICollectionViewCell {
     let imageView = UIImageView()
+    private let liveOverlay = LivePhotoOverlay()
     private let spinner = UIActivityIndicatorView(style: .medium)
     private let message = UILabel()
     private var request: Int32?
@@ -61,6 +62,7 @@ final class PhotoCell: UICollectionViewCell {
     private var ratio: CGFloat = 1
     override init(frame: CGRect) {
         super.init(frame: frame)
+        imageView.addSubview(liveOverlay)
         contentView.addSubview(imageView); contentView.addSubview(spinner); contentView.addSubview(message)
         imageView.contentMode = .scaleAspectFit; imageView.clipsToBounds = true
         imageView.layer.cornerRadius = 14; imageView.backgroundColor = .white.withAlphaComponent(0.35)
@@ -78,19 +80,27 @@ final class PhotoCell: UICollectionViewCell {
         let factor = min(1, bounds.width / max(1, desired.width), bounds.height / max(1, desired.height))
         let size = CGSize(width: desired.width * factor, height: desired.height * factor)
         imageView.frame = CGRect(x: (bounds.width - size.width) / 2, y: (bounds.height - size.height) / 2, width: size.width, height: size.height)
+        liveOverlay.frame = imageView.bounds
         spinner.center = CGPoint(x: bounds.midX, y: bounds.midY)
         message.frame = bounds.insetBy(dx: 18, dy: 40)
     }
+    func setLiveActive(_ active: Bool) {
+        if active, let id = representedID, let store { liveOverlay.play(id: id, store: store) }
+        else { liveOverlay.stop() }
+    }
     func configure(id: String, store: PhotoStore, pixels: CGSize) {
+        liveOverlay.stop()
         if let request { self.store?.manager.cancelImageRequest(request) }
         self.store = store; representedID = id
-        imageView.image = nil; imageView.isHidden = false; contentView.transform = .identity; contentView.alpha = 1
-        spinner.startAnimating(); message.text = nil
+        imageView.image = store.cachedPreview(for: id, pixels: pixels)
+        imageView.isHidden = false; contentView.transform = .identity; contentView.alpha = 1
+        if imageView.image == nil { spinner.startAnimating() } else { spinner.stopAnimating() }
+        message.text = nil
         if let asset = store.assets[id] { ratio = CGFloat(asset.pixelWidth) / CGFloat(max(1, asset.pixelHeight)) }
         setNeedsLayout()
         request = store.image(for: id, pixels: pixels) { [weak self] image, final, error in
             guard let self, self.representedID == id else { return }
-            if let image { self.imageView.image = image; self.spinner.stopAnimating() }
+            if let image, final || self.imageView.image == nil { self.imageView.image = image; self.spinner.stopAnimating() }
             if final {
                 self.spinner.stopAnimating()
                 if self.imageView.image == nil { self.message.text = error == nil ? "照片暂不可用\n请检查 iCloud 网络" : "照片加载失败\n请稍后重试" }
@@ -98,7 +108,7 @@ final class PhotoCell: UICollectionViewCell {
         }
     }
     override func prepareForReuse() {
-        super.prepareForReuse()
+        super.prepareForReuse(); liveOverlay.stop()
         if let request { store?.manager.cancelImageRequest(request) }
         request = nil; representedID = nil; imageView.image = nil
         contentView.transform = .identity; contentView.alpha = 1

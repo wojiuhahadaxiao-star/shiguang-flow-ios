@@ -7,6 +7,17 @@ final class PhotoStore: NSObject, PHPhotoLibraryChangeObserver {
     var onChange: (() -> Void)?
     private let queue = DispatchQueue(label: "com.yang.shiguangflow.photos", qos: .userInitiated)
     private var generation = 0
+    private let previews: NSCache<NSString, UIImage> = {
+        let cache = NSCache<NSString, UIImage>()
+        cache.totalCostLimit = 32 * 1024 * 1024
+        return cache
+    }()
+    private func previewKey(_ id: String, _ pixels: CGSize) -> NSString {
+        return "\(id)|\(Int(pixels.width))x\(Int(pixels.height))" as NSString
+    }
+    func cachedPreview(for id: String, pixels: CGSize) -> UIImage? {
+        previews.object(forKey: previewKey(id, pixels))
+    }
     override init() { super.init(); PHPhotoLibrary.shared().register(self) }
     deinit { PHPhotoLibrary.shared().unregisterChangeObserver(self) }
     var authorization: PHAuthorizationStatus { PHPhotoLibrary.authorizationStatus(for: .readWrite) }
@@ -45,6 +56,14 @@ final class PhotoStore: NSObject, PHPhotoLibraryChangeObserver {
             let error = info?[PHImageErrorKey] as? Error
             DispatchQueue.main.async {
                 guard !cancelled else { return }
+                if !highQuality, let image {
+                    let key = self.previewKey(id, pixels)
+                    // A low-resolution callback must not replace an existing clear preview.
+                    if !degraded || self.previews.object(forKey: key) == nil {
+                        let cost = image.cgImage.map { $0.bytesPerRow * $0.height } ?? 0
+                        self.previews.setObject(image, forKey: key, cost: cost)
+                    }
+                }
                 completion(image, !degraded, error?.localizedDescription)
             }
         }
@@ -60,5 +79,5 @@ final class PhotoStore: NSObject, PHPhotoLibraryChangeObserver {
             DispatchQueue.main.async { completion(success, error?.localizedDescription) }
         }
     }
-    func photoLibraryDidChange(_ changeInstance: PHChange) { DispatchQueue.main.async { [weak self] in self?.onChange?() } }
+    func photoLibraryDidChange(_ changeInstance: PHChange) { DispatchQueue.main.async { [weak self] in self?.previews.removeAllObjects(); self?.onChange?() } }
 }
