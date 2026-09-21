@@ -1,0 +1,19 @@
+完整更新 1.1.1 P3（功能代码与上一 P3 一致，新增完整性校验）
+
+此 ZIP 不再有额外外层 ShiguangFlow 文件夹。解压目标目录中直接包含：
+.github、ShiguangFlow、ShiguangFlow.xcodeproj、Sources、Tests、scripts、Package.swift、RELEASE.json。
+
+Windows 推荐流程：
+1. GitHub Desktop 登录 GitHub，File → Clone repository，选择你现有的 shiguang-flow-ios 仓库，克隆到一个新本地目录。
+2. Repository → Show in Explorer 打开该仓库目录。
+3. 将本 ZIP 直接解压到这个目录，遇到同名文件选择替换。不是复制外层目录，也不要删除 .git。
+4. GitHub Desktop 检查 Changes：必须包含 .github/workflows/build-ios.yml、RELEASE.json、scripts/verify_release.py，以及新版对应 Swift 文件。
+5. 填写 Update complete 1.1.1 P3，Commit to main，然后 Push origin。
+6. GitHub Actions 查看本次提交对应的最新运行，须出现并通过 Verify complete 1.1.1 source。
+7. 全部构建通过后下载该次 1.1.1 产物，用新 IPA 安装；build-info.txt 记录本次提交号和 build 号。
+
+校验失败会列出缺少或不同的文件。不要删除校验步骤来绕过；用同一 ZIP 的对应文件补齐。
+RELEASE.json 描述本次发布。以后自己修改功能代码时，校验也会阻止构建，需要针对新发布重新生成校验清单。
+
+不要在旧 Actions 运行里点 Re-run jobs 来获取新源码，那会使用旧提交。
+本包仅增加发布完整性校验；没有增加 Xcode 或实机验证结果。

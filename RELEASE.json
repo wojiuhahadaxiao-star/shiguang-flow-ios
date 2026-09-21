@@ -1,0 +1,26 @@
+{
+  "version": "1.1.1",
+  "release": "P3-complete",
+  "files": {
+    "ShiguangFlow/AppDelegate.swift": "a5b31df01d4de105e8c270bf0c8269582a50bae19d389f69f11da2af0c9d291a",
+    "ShiguangFlow/Assets.xcassets/AppIcon.appiconset/AppIcon.png": "d5a6305ee35cd626ef8abb9b3e509a41b102896dd0a1c0fcfeb683258b6cc830",
+    "ShiguangFlow/Assets.xcassets/AppIcon.appiconset/Contents.json": "9239900ca4c37dc860feb154216409f05d906e26f2d79550e1e8e8b8db6324c7",
+    "ShiguangFlow/Assets.xcassets/Contents.json": "e8e8ef4b27126d62305af321d12a6e64b866ca0b160f0f83efae90111f0ee576",
+    "ShiguangFlow/Assets.xcassets/LaunchBackground.colorset/Contents.json": "280033fcec0ae3594604c784b13d720106ccc3a12395aee664b30fef7f776e90",
+    "ShiguangFlow/BasketViewController.swift": "643811f1f521f8f671a95a3cdb88e2f3db140ab4a2e39b8a943ae89ecef91945",
+    "ShiguangFlow/CoverFlowLayout.swift": "d437bf26baecfd00ec1fc4647668df0fe071866fac4057d5daa7f98022f5908d",
+    "ShiguangFlow/FlowViewController.swift": "61bb7d5cf99599b20b88b5bda379af2c2add650e1b0f8580dea677025d85a1c3",
+    "ShiguangFlow/Info.plist": "816f28c13cd38ea94497d8cfb491976cb1870c12126ee9febb03aa3601a74545",
+    "ShiguangFlow/PhotoStore.swift": "b97bcde7bf22d68c797275f0a1aded42720765363b02303b784456a34113ebb5",
+    "ShiguangFlow/PhotoViewer.swift": "8543d6cdfa676058ecc8f2404e8062abf8db7343936a435a0393c62a6cc9a485",
+    "ShiguangFlow.xcodeproj/project.pbxproj": "f725143a108bd99f54ab42612521e20da0fb4ae38d174638cc8af33c39fa2f68",
+    "ShiguangFlow.xcodeproj/xcshareddata/xcschemes/ShiguangFlow.xcscheme": "dbadb408272a7c4696040a9478a9adfa113381536cbd08ec1448ccb48d4a6a63",
+    "Sources/FlowCore/FlowSession.swift": "c7bae1645ee303eb5f09ee1f94f303a1e4ab9071ab1a385b1b61d881f3b7f25e",
+    "Tests/FlowCoreTests/FlowSessionTests.swift": "41b48deb3f60b3ede7c5317ca084afc553f658381cf7b29dfafb4ef659b34040",
+    "scripts/check_source.py": "b0aa4e70653c6a46e0ec9341414e5463fbb55a1074d9b3ed4e92e0010ae8dab1",
+    "scripts/generate_project.py": "68fe33f1990f66f5436747cee2559044b3713fa601b5dc49d15f345fe4defcdb",
+    "scripts/verify_release.py": "a098c4dfec94ec0f6e69faeb03c0e6f09a402e75e32cbb80d809cbc939725299",
+    ".github/workflows/build-ios.yml": "632337cb1d92321ed3d65086c9b21c0825200aa915470f33f9a9590ae3c93989",
+    "Package.swift": "e04870b46a34eefd7195ba99f84e3dc98623a36df9354c5d118d4aa2eeef47cb"
+  }
+}

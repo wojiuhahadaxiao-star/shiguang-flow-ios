@@ -119,17 +119,22 @@ final class FlowViewController: UIViewController, UICollectionViewDataSource, UI
         }
     }
     private func finishInteraction() {
-        isBusy = false; collection.isScrollEnabled = true; updateChrome()
+        isBusy = false; collection.isScrollEnabled = true; updateChrome(); updateLivePlayback()
         if deferredRefresh { deferredRefresh = false; refresh() }
     }
     private func persist() { UserDefaults.standard.set(session.pending, forKey: "flow.pending.v1") }
     private func render(focus id: String? = nil, fallback: Int = 0) {
         ids = session.visibleIDs; index = id.flatMap { ids.firstIndex(of: $0) } ?? min(fallback, max(0, ids.count - 1))
-        collection.reloadData(); collection.layoutIfNeeded(); focus(index, animated: false); updateChrome(); preheat()
+        collection.reloadData(); collection.layoutIfNeeded(); focus(index, animated: false); updateChrome(); preheat(); updateLivePlayback()
     }
     private func focus(_ value: Int, animated: Bool) {
         guard !ids.isEmpty else { collection.contentOffset = .zero; return }
         index = max(0, min(ids.count - 1, value)); collection.setContentOffset(CGPoint(x: CGFloat(index) * flow.pitch, y: 0), animated: animated)
+    }
+    private func updateLivePlayback() {
+        for case let cell as PhotoCell in collection.visibleCells {
+            cell.setLiveActive(!isBusy && viewer == nil && !collection.isDragging && !collection.isDecelerating && cell.representedID == currentID)
+        }
     }
     private func preheat() {
         let start = max(0, index - 3), end = min(ids.count, index + 4)
@@ -222,7 +227,7 @@ final class FlowViewController: UIViewController, UICollectionViewDataSource, UI
             edgeLabel.alpha = min(1, overscroll / 64)
         } else { edgeLabel.alpha = 0; edgeReady = false; edgeLabel.transform = .identity }
     }
-    func scrollViewWillBeginDragging(_ scrollView: UIScrollView) { pagingDirection = 0; edgeReady = false }
+    func scrollViewWillBeginDragging(_ scrollView: UIScrollView) { pagingDirection = 0; edgeReady = false; updateLivePlayback() }
     func scrollViewWillEndDragging(_ scrollView: UIScrollView, withVelocity velocity: CGPoint, targetContentOffset: UnsafeMutablePointer<CGPoint>) {
         let maxX = CGFloat(max(0, ids.count - 1)) * flow.pitch
         if scrollView.contentOffset.x < -64 && session.hasPrevious { pagingDirection = -1 }
@@ -235,7 +240,7 @@ final class FlowViewController: UIViewController, UICollectionViewDataSource, UI
     }
     func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) { settled() }
     func scrollViewDidEndScrollingAnimation(_ scrollView: UIScrollView) { settled() }
-    private func settled() { preheat(); if deferredRefresh && !isBusy { deferredRefresh = false; refresh() } }
+    private func settled() { preheat(); updateLivePlayback(); if deferredRefresh && !isBusy { deferredRefresh = false; refresh() } }
     private func changePage(_ direction: Int) {
         guard !isBusy, session.movePage(direction) else { return }
         isBusy = true; collection.isScrollEnabled = false; haptic(); edgeLabel.alpha = 0; edgeReady = false; updateChrome()
@@ -262,11 +267,12 @@ final class FlowViewController: UIViewController, UICollectionViewDataSource, UI
         guard let cell = focusedCell() else { return }
         let distance = max(0, -gesture.translation(in: collection).y)
         switch gesture.state {
-        case .began: panID = currentID
+        case .began:
+            focus(index, animated: false); collection.layoutIfNeeded()
+            panID = currentID
         case .changed:
-            let scale = max(0.78, 1 - distance / 1200)
-            cell.contentView.transform = CGAffineTransform(translationX: 0, y: -distance).scaledBy(x: scale, y: scale)
-            cell.contentView.alpha = max(0.1, 1 - distance / 400)
+            cell.contentView.transform = CGAffineTransform(translationX: 0, y: -distance)
+            cell.contentView.alpha = max(0, 1 - distance / 360)
         case .ended:
             if panID == currentID && (distance > 95 || gesture.velocity(in: collection).y < -850) { stageFocused() } else { resetCell(cell) }
             panID = nil; settled()
@@ -279,32 +285,50 @@ final class FlowViewController: UIViewController, UICollectionViewDataSource, UI
     }
     private func stageFocused() {
         guard !isBusy, let id = currentID, let cell = focusedCell() else { return }
-        isBusy = true; collection.isScrollEnabled = false; updateChrome(); haptic()
-        let oldIndex = index
-        let oldPage = session.page
-        let hasRightNeighbor = ids.indices.contains(index + 1)
+        isBusy = true; collection.isScrollEnabled = false; updateChrome(); updateLivePlayback(); haptic()
+        let oldIDs = ids, oldIndex = index, oldPage = session.page
         let nextID = ids.indices.contains(index + 1) ? ids[index + 1] : (index > 0 ? ids[index - 1] : nil)
-        UIView.animate(withDuration: 0.25, animations: {
-            cell.contentView.transform = CGAffineTransform(translationX: 0, y: -self.collection.bounds.height).scaledBy(x: 0.75, y: 0.75)
+        // Translation only: preserve the photo's size and horizontal position.
+        let departureY = min(cell.contentView.transform.ty - 180, -collection.bounds.height * 0.75)
+        UIView.animate(withDuration: UIAccessibility.isReduceMotionEnabled ? 0.15 : 0.30,
+                       delay: 0, options: [.beginFromCurrentState, .curveEaseOut], animations: {
+            cell.contentView.transform = CGAffineTransform(translationX: 0, y: departureY)
             cell.contentView.alpha = 0
         }) { _ in
             self.session.stage(id); self.persist()
-            let movedToPreviousPage = self.session.page < oldPage
-            self.render(focus: nextID, fallback: movedToPreviousPage ? max(0, self.session.visibleIDs.count - 1) : oldIndex)
-            guard let incoming = self.focusedCell() else { self.finishInteraction(); return }
-            incoming.contentView.transform = CGAffineTransform(translationX: hasRightNeighbor && !movedToPreviousPage ? self.flow.pitch * 0.65 : -self.flow.pitch * 0.65, y: 0).scaledBy(x: 0.86, y: 0.86)
-            incoming.contentView.alpha = 0.65
-            UIView.animate(withDuration: self.motionDuration, delay: 0, usingSpringWithDamping: 0.86, initialSpringVelocity: 0.3, animations: {
-                incoming.contentView.transform = .identity; incoming.contentView.alpha = 1
-            }) { _ in self.finishInteraction() }
+            let newIDs = self.session.visibleIDs
+            let fallback = self.session.page < oldPage ? max(0, newIDs.count - 1) : oldIndex
+            let newIndex = nextID.flatMap { newIDs.firstIndex(of: $0) } ?? min(fallback, max(0, newIDs.count - 1))
+            let oldSet = Set(oldIDs), newSet = Set(newIDs)
+            let removed = oldIDs.enumerated().compactMap { newSet.contains($0.element) ? nil : IndexPath(item: $0.offset, section: 0) }
+            let inserted = newIDs.enumerated().compactMap { oldSet.contains($0.element) ? nil : IndexPath(item: $0.offset, section: 0) }
+            // Keep surviving cells and their decoded images. Never reload the whole
+            // collection between the disappearing card and its neighbor taking over.
+            self.collection.performBatchUpdates({
+                self.ids = newIDs; self.index = newIndex
+                self.collection.deleteItems(at: removed)
+                self.collection.insertItems(at: inserted)
+                self.collection.setContentOffset(CGPoint(x: CGFloat(newIndex) * self.flow.pitch, y: 0), animated: false)
+            }) { _ in
+                self.updateChrome(); self.preheat(); self.finishInteraction()
+                if self.session.pending.count == 99 { self.promptForPendingLimit() }
+            }
+            self.updateChrome()
         }
+    }
+    private func promptForPendingLimit() {
+        guard presentedViewController == nil else { return }
+        let alert = UIAlertController(title: "已有 99 张待删除照片", message: "要现在回看并确认删除吗？照片仍保留在系统相册中。", preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "继续浏览", style: .cancel))
+        alert.addAction(UIAlertAction(title: "查看并删除", style: .default) { [weak self] _ in self?.basket() })
+        present(alert, animated: true)
     }
     @objc private func pinched(_ gesture: UIPinchGestureRecognizer) {
         if gesture.state == .began && gesture.scale >= 1 { openPhoto() }
     }
     @objc private func openPhoto() {
         guard !isBusy, viewer == nil, let id = currentID, let cell = focusedCell(), let image = cell.imageView.image, let asset = store.assets[id] else { return }
-        focus(index, animated: false); collection.layoutIfNeeded(); isBusy = true; haptic()
+        focus(index, animated: false); collection.layoutIfNeeded(); isBusy = true; updateLivePlayback(); haptic()
         let origin = cell.imageView.convert(cell.imageView.bounds, to: view)
         let overlay = PhotoViewer(frame: view.bounds, image: image, pixelSize: CGSize(width: asset.pixelWidth, height: asset.pixelHeight))
         viewer = overlay; overlay.imageView.isHidden = true; overlay.alpha = 0; overlay.isUserInteractionEnabled = false; view.addSubview(overlay); overlay.layoutIfNeeded()
@@ -334,15 +358,23 @@ final class FlowViewController: UIViewController, UICollectionViewDataSource, UI
     @objc private func settings() {
         guard !isBusy else { return }
         let buildNumber = (Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String) ?? "1"
-        let sheet = UIAlertController(title: "拾光 Flow", message: "独立新版 · v1.1.0 (\(buildNumber))", preferredStyle: .actionSheet)
+        let sheet = UIAlertController(title: "拾光 Flow", message: "独立新版 · v1.1.1 (\(buildNumber))", preferredStyle: .actionSheet)
         sheet.addAction(UIAlertAction(title: "随机换一组", style: .default) { _ in self.session.newRandomBatch(); self.render() })
         if store.authorization == .notDetermined { sheet.addAction(UIAlertAction(title: "允许访问照片", style: .default) { _ in self.store.authorize { self.refresh() } }) }
         if store.authorization == .limited { sheet.addAction(UIAlertAction(title: "管理可访问的照片", style: .default) { _ in PHPhotoLibrary.shared().presentLimitedLibraryPicker(from: self) }) }
         sheet.addAction(UIAlertAction(title: "系统照片权限设置", style: .default) { _ in self.openSettings() })
+        let liveEnabled = UserDefaults.standard.bool(forKey: "flow.liveEnabled")
+        let liveSound = UserDefaults.standard.bool(forKey: "flow.liveSound")
+        sheet.addAction(UIAlertAction(title: liveEnabled ? "Live Photo：已开启，点击关闭" : "Live Photo：已关闭，点击开启", style: .default) { _ in
+            UserDefaults.standard.set(!liveEnabled, forKey: "flow.liveEnabled"); self.updateLivePlayback()
+        })
+        sheet.addAction(UIAlertAction(title: liveSound ? "Live Photo 声音：有声，切换静音" : "Live Photo 声音：静音，切换有声", style: .default) { _ in
+            UserDefaults.standard.set(!liveSound, forKey: "flow.liveSound"); self.updateLivePlayback()
+        })
         let enabled = UserDefaults.standard.object(forKey: "flow.haptics") as? Bool != false
         sheet.addAction(UIAlertAction(title: enabled ? "关闭触感反馈" : "开启触感反馈", style: .default) { _ in UserDefaults.standard.set(!enabled, forKey: "flow.haptics") })
         sheet.addAction(UIAlertAction(title: "操作说明", style: .default) { _ in
-            self.message("操作说明", "左右滑动浏览；上滑放入待删除；双击或双指展开进入大图。\n\n大图支持双指缩放，捏回适屏后下滑返回。\n\n点击日期切换随机 / 当日。两种模式都可在最右端继续左拉换下一组，在最左端继续右拉回上一组，每组最多 25 张。\n\n左下角撤回，右下角回看待删。实删需两次确认及系统授权。Live Photo 当前显示静态照片。")
+            self.message("操作说明", "左右滑动浏览；上滑放入待删除；双击或双指展开进入大图。\n\n大图支持双指缩放，捏回适屏后下滑返回。\n\n点击日期切换随机 / 当日。两种模式都可在最右端继续左拉换下一组，在最左端继续右拉回上一组，每组最多 25 张。\n\n左下角撤回，右下角回看待删。实删需两次确认及系统授权。Live Photo 可在设置中开关，并选择静音或有声；放大查看时显示静态清晰图。")
         })
         sheet.addAction(UIAlertAction(title: "取消", style: .cancel) { _ in self.settled() })
         sheet.popoverPresentationController?.sourceView = settingsButton; sheet.popoverPresentationController?.sourceRect = settingsButton.bounds
@@ -350,6 +382,7 @@ final class FlowViewController: UIViewController, UICollectionViewDataSource, UI
     }
     @objc private func basket() {
         guard !isBusy, !session.pending.isEmpty else { return }
+        for case let cell as PhotoCell in collection.visibleCells { cell.setLiveActive(false) }
         let basket = BasketViewController(store: store, ids: session.pending)
         basket.onRestore = { [weak self] id in guard let self else { return }; self.session.restore(id); self.persist(); self.render(focus: self.currentID) }
         basket.onRestoreAll = { [weak self] in guard let self else { return }; self.session.restoreAll(); self.persist(); self.render(focus: self.currentID) }

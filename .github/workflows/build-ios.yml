@@ -11,6 +11,8 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+      - name: Verify complete 1.1.1 source
+        run: python3 scripts/verify_release.py
       - name: Toolchain
         run: xcodebuild -version && swift --version
       - name: Test date paging and undo model
@@ -29,17 +31,19 @@ jobs:
       - name: Package unsigned IPA for signing
         run: |
           mkdir -p output/Payload
+          echo "version=1.1.1 commit=${{ github.sha }} build=${{ github.run_number }}" > output/build-info.txt
           cp -R build/device/Build/Products/Release-iphoneos/ShiguangFlow.app output/Payload/
           cd output
           /usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' Payload/ShiguangFlow.app/Info.plist
           /usr/libexec/PlistBuddy -c 'Print CFBundleVersion' Payload/ShiguangFlow.app/Info.plist
-          zip -qry ShiguangFlow-1.1.0-build${{ github.run_number }}-unsigned.ipa Payload
+          zip -qry ShiguangFlow-1.1.1-build${{ github.run_number }}-unsigned.ipa Payload
           shasum -a 256 *.ipa > SHA256.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: ShiguangFlow-1.1.0-build${{ github.run_number }}-unsigned
+          name: ShiguangFlow-1.1.1-build${{ github.run_number }}-unsigned
           path: |
             output/*.ipa
             output/SHA256.txt
+            output/build-info.txt
           if-no-files-found: error
           retention-days: 14
